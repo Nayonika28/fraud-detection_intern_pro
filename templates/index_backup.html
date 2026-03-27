@@ -276,7 +276,7 @@
         <div class="controls-section">
             <div class="input-group">
                 <label class="input-label">Transaction Data</label>
-                <input id="data" placeholder="Enter 12 comma-separated values or use buttons below">
+                <input id="data" placeholder="Enter 30 comma-separated values or use buttons below">
             </div>
 
             <div class="input-group">
@@ -324,27 +324,11 @@ let chart;
 
 function testButton() {
     console.log("Test button clicked!");
+    alert("JavaScript is working! Test button successful!");
     
-    // Check if server is running
-    fetch("/")
-        .then(res => {
-            if (res.ok) {
-                alert("✅ SUCCESS! JavaScript is working AND Flask server is running!");
-                
-                const resultDiv = document.getElementById("result");
-                resultDiv.className = 'result-safe result-card';
-                resultDiv.innerHTML = `<span class="icon">✅</span><div><strong>ALL SYSTEMS WORKING!</strong><br>JavaScript and Flask server are connected.</div>`;
-            } else {
-                throw new Error('Server not responding properly');
-            }
-        })
-        .catch(error => {
-            alert("❌ ISSUE: Flask server may not be running. Please start with: python app.py");
-            
-            const resultDiv = document.getElementById("result");
-            resultDiv.className = 'result-error result-card';
-            resultDiv.innerHTML = `<span class="icon">❌</span><div><strong>SERVER ISSUE!</strong><br>Please run: python app.py in terminal</div>`;
-        });
+    const resultDiv = document.getElementById("result");
+    resultDiv.className = 'result-safe result-card';
+    resultDiv.innerHTML = `<span class="icon">✅</span><div><strong>TEST SUCCESSFUL!</strong><br>JavaScript is working properly.</div>`;
 }
 
 function updateChart(prob) {
@@ -440,12 +424,12 @@ function generateData() {
     arr.push(time);
     arr.push(amount);
 
-    for(let i = 0; i < 10; i++) {
+    for(let i = 0; i < 28; i++) {
         arr.push((Math.random() * 2 - 1).toFixed(3));
     }
 
     document.getElementById("data").value = arr.join(",");
-    console.log("Generated 12 features:", arr);
+    console.log("Generated data:", arr);
 }
 
 function checkFraud() {
@@ -465,14 +449,14 @@ function checkFraud() {
         return;
     }
 
-    // If less than 12 values, pad with random values
-    while (values.length < 12) {
+    // If less than 30 values, pad with random values
+    while (values.length < 30) {
         values.push((Math.random() * 2 - 1));
     }
 
-    // If more than 12 values, truncate to 12
-    values = values.slice(0, 12);
-    console.log("Final values (12):", values);
+    // If more than 30 values, truncate to 30
+    values = values.slice(0, 30);
+    console.log("Final values (30):", values);
 
     // Update the data field with processed values
     dataField.value = values.join(",");
@@ -482,9 +466,7 @@ function checkFraud() {
     resultDiv.className = 'result-card';
     resultDiv.innerHTML = `<span class="icon">⏳</span>Analyzing transaction...`;
 
-    console.log("Sending fetch request to /predict...");
-    console.log("Request body:", JSON.stringify({features: values}));
-
+    console.log("Sending fetch request...");
     fetch("/predict", {
         method: "POST",
         headers: {
@@ -493,22 +475,14 @@ function checkFraud() {
         body: JSON.stringify({features: values})
     })
     .then(res => {
-        console.log("Response status:", res.status);
-        console.log("Response headers:", res.headers);
-        
+        console.log("Response received:", res);
         if (!res.ok) {
-            console.log("Response not OK, status:", res.status);
-            throw new Error(`Server responded with status: ${res.status} ${res.statusText}`);
+            throw new Error('Network response was not ok');
         }
         return res.json();
     })
     .then(data => {
         console.log("Data received:", data);
-        
-        if (!data || typeof data.probability === 'undefined' || typeof data.fraud === 'undefined') {
-            throw new Error('Invalid response format from server');
-        }
-        
         const riskPercentage = (data.probability * 100).toFixed(2);
         
         if (data.fraud === 1) {
@@ -522,23 +496,10 @@ function checkFraud() {
         updateChart(data.probability);
     })
     .catch(error => {
-        console.error('Full error details:', error);
-        console.error('Error stack:', error.stack);
-        
+        console.error('Error:', error);
         const resultDiv = document.getElementById("result");
         resultDiv.className = 'result-error result-card';
-        
-        // Provide specific error messages
-        let errorMessage = error.message;
-        if (error.message.includes('Failed to fetch')) {
-            errorMessage = 'Cannot connect to server. Please make sure Flask server is running on http://localhost:5000';
-        } else if (error.message.includes('status: 500')) {
-            errorMessage = 'Server internal error. Check server logs for details';
-        } else if (error.message.includes('status: 404')) {
-            errorMessage = 'Endpoint not found. Check Flask routes';
-        }
-        
-        resultDiv.innerHTML = `<span class="icon">❌</span><div><strong>ANALYSIS FAILED</strong><br>${errorMessage}</div>`;
+        resultDiv.innerHTML = `<span class="icon">❌</span><div><strong>ANALYSIS FAILED</strong><br>${error.message}</div>`;
         
         // Reset stats on error
         document.getElementById('riskScore').textContent = '--';
@@ -566,12 +527,12 @@ function sendRealData() {
     arr.push(time);
     arr.push(amount);
 
-    // fill remaining features automatically (10 more to make 12 total)
-    for(let i = 0; i < 10; i++) {
+    // fill remaining features automatically
+    for(let i = 0; i < 28; i++) {
         arr.push((Math.random() * 2 - 1));
     }
 
-    console.log("Generated 12 features:", arr);
+    console.log("Generated array:", arr);
 
     // Update the transaction data field with the generated array
     document.getElementById("data").value = arr.join(",");
